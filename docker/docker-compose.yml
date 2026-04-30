@@ -1,0 +1,35 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: rag_mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27007:27017"
+    volumes:
+      - ./mongodb:/data/db
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag_qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+
+  app:
+    build:
+      context: ../src
+      dockerfile: Dockerfile
+    container_name: rag_app
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - ../src/.env
+    depends_on:
+      - mongodb
+      - qdrant

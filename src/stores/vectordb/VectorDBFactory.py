@@ -1,15 +1,17 @@
-from controllers.BaseController import BaseController
+from helpers import get_settings
 from stores.vectordb.provider.QDrantDB import QDrantDB
 
 
 class VectorDBFactory:
 
     def __init__(self):
-        self.base_controller = BaseController()
+        self.settings = get_settings()
 
     def create_client(self, provider: str = "qdrant"):
         if provider == "qdrant":
-            db_path = self.base_controller.get_db_path("qdrant_data")
-            return QDrantDB(db_path=db_path)
+            return QDrantDB(
+                url=self.settings.QDRANT_URL,
+                api_key=self.settings.QDRANT_API_KEY
+            )
 
         raise ValueError(f"Unknown vector DB provider: {provider}")

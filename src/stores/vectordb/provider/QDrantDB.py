@@ -1,15 +1,19 @@
+from qdrant_client import QdrantClient
 from stores.vectordb.VectorDBInterface import VectorDBInterface
 
 
 class QDrantDB(VectorDBInterface):
 
-    def __init__(self, db_path: str):
-        self.db_path = db_path
+    def __init__(self, url: str, api_key: str):
+        self.url = url
+        self.api_key = api_key
         self.client = None
 
     def connect(self):
-        # Member 2 will implement this
-        pass
+        self.client = QdrantClient(
+            url=self.url,
+            api_key=self.api_key
+        )
 
     def create_collection(self, collection_name: str, embedding_size: int):
         # Member 2 will implement this

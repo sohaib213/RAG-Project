@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     MAX_RESPONSE_TOKENS: int
     TEMPERATURE: float
 
+    QDRANT_URL: str
+    QDRANT_API_KEY: str
     class Config:
         env_file = ".env"
 
