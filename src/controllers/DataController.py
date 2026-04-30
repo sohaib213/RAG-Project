@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from src.helpers import get_settings
+from helpers import get_settings
 
 
 class DataController:

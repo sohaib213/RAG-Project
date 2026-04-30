@@ -1,10 +1,10 @@
 import aiofiles
 from fastapi import APIRouter, Depends, UploadFile, File, Request
 from fastapi.responses import JSONResponse
-from src.helpers import get_settings, Settings
-from src.models import ProjectModel, ChunkModel
-from src.controllers import DataController, FileController, ProcessController
-from src.routes.schema.data import ProcessRequest
+from helpers import get_settings, Settings
+from models import ProjectModel, ChunkModel
+from controllers import DataController, FileController, ProcessController
+from routes.schema.data import ProcessRequest
 
 data_router = APIRouter()
 

@@ -1,5 +1,5 @@
-from src.controllers.BaseController import BaseController
-from src.stores.llm.tempelate.template_parser import TemplateParser
+from controllers.BaseController import BaseController
+from stores.llm.tempelate.template_parser import TemplateParser
 
 
 class NlpController(BaseController):

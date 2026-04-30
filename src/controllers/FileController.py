@@ -1,5 +1,5 @@
 import os
-from src.controllers.BaseController import BaseController
+from controllers.BaseController import BaseController
 
 
 class FileController(BaseController):

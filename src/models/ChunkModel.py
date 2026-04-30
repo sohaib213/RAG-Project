@@ -1,5 +1,5 @@
-from src.models.DataBaseModel import DataBaseModel
-from src.models.db_schemes.data_chunk import DataChunk
+from models.DataBaseModel import DataBaseModel
+from models.db_schemes.data_chunk import DataChunk
 
 
 class ChunkModel(DataBaseModel):

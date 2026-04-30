@@ -1,7 +1,7 @@
 import os
 import re
-from src.controllers.BaseController import BaseController
-from src.controllers.FileController import FileController
+from controllers.BaseController import BaseController
+from controllers.FileController import FileController
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, PyMuPDFLoader
 

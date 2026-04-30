@@ -1,5 +1,5 @@
-from src.controllers.BaseController import BaseController
-from src.stores.vectordb.provider.QDrantDB import QDrantDB
+from controllers.BaseController import BaseController
+from stores.vectordb.provider.QDrantDB import QDrantDB
 
 
 class VectorDBFactory:

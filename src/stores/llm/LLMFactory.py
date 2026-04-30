@@ -1,6 +1,6 @@
-from src.helpers import get_settings
-from src.stores.llm.provider.OpenAIProvider import OpenAIProvider
-from src.stores.llm.provider.EmbeddingProvider import EmbeddingProvider
+from helpers import get_settings
+from stores.llm.provider.OpenAIProvider import OpenAIProvider
+from stores.llm.provider.EmbeddingProvider import EmbeddingProvider
 
 
 class LLMFactory:

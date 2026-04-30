@@ -1,5 +1,5 @@
 from openai import OpenAI
-from src.stores.llm.LLMInterface import LLMInterface
+from stores.llm.LLMInterface import LLMInterface
 
 
 class OpenAIProvider(LLMInterface):

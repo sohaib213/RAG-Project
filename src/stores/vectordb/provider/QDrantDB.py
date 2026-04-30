@@ -1,4 +1,4 @@
-from src.stores.vectordb.VectorDBInterface import VectorDBInterface
+from stores.vectordb.VectorDBInterface import VectorDBInterface
 
 
 class QDrantDB(VectorDBInterface):

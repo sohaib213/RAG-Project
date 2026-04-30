@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from src.stores.llm.LLMInterface import LLMInterface
+from stores.llm.LLMInterface import LLMInterface
 
 
 class EmbeddingProvider(LLMInterface):

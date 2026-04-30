@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from src.helpers import get_settings
-from src.routes import base_router, data_router, nlp_router
-from src.stores.llm.LLMFactory import LLMFactory
-from src.stores.vectordb.VectorDBFactory import VectorDBFactory
-from src.stores.llm.tempelate.template_parser import TemplateParser
+from helpers import get_settings
+from routes import base_router, data_router, nlp_router
+from stores.llm.LLMFactory import LLMFactory
+from stores.vectordb.VectorDBFactory import VectorDBFactory
+from stores.llm.tempelate.template_parser import TemplateParser
 
 
 @asynccontextmanager
