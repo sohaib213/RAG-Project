@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from models import ProjectModel, ChunkModel
-from controllers import NlpController
-from routes.schema import PushRequest, SearchRequest
+from src.models import ProjectModel, ChunkModel
+from src.controllers import NlpController
+from src.routes.schema import PushRequest, SearchRequest
 
 nlp_router = APIRouter()
 

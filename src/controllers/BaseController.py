@@ -1,5 +1,5 @@
 import os
-from helpers import get_settings
+from src.helpers import get_settings
 
 
 class BaseController:
