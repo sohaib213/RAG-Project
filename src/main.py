@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from helpers import get_settings
-from routes import base_router, data_router, nlp_router
-from stores.llm.LLMFactory import LLMFactory
-from stores.vectordb.VectorDBFactory import VectorDBFactory
-from stores.llm.tempelate.template_parser import TemplateParser
+from src.helpers import get_settings
+from src.routes import base_router, data_router, nlp_router
+from src.stores.llm.LLMFactory import LLMFactory
+from src.stores.vectordb.VectorDBFactory import VectorDBFactory
+from src.stores.llm.tempelate.template_parser import TemplateParser
 
 
 @asynccontextmanager
@@ -40,15 +40,14 @@ def create_app():
 
     app = FastAPI(
         title=settings.APP_NAME,
-        version=settings.APP_VERSION
+        version=settings.APP_VERSION,
+        lifespan=lifespan
     )
 
     # Register all routers with their URL prefixes
     app.include_router(base_router, prefix="/api")
     app.include_router(data_router, prefix="/api/data")
     app.include_router(nlp_router, prefix="/api/nlp")
-
-    app.router.lifespan_context = lifespan
 
     return app
 

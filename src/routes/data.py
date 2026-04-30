@@ -1,10 +1,10 @@
 import aiofiles
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Request
 from fastapi.responses import JSONResponse
-from helpers import get_settings, Settings
-from models import ProjectModel, ChunkModel
-from controllers import DataController, FileController, ProcessController
-from routes.schema.data import ProcessRequest
+from src.helpers import get_settings, Settings
+from src.models import ProjectModel, ChunkModel
+from src.controllers import DataController, FileController, ProcessController
+from src.routes.schema.data import ProcessRequest
 
 data_router = APIRouter()
 
@@ -12,7 +12,7 @@ data_router = APIRouter()
 @data_router.post("/upload/{project_id}")
 async def upload_file(project_id: str, file: UploadFile = File(...),
                       settings: Settings = Depends(get_settings),
-                      request=None):
+                      request: Request = None):
 
     # Step 1: validate the file type and size
     data_controller = DataController()

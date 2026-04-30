@@ -1,5 +1,5 @@
-from models.DataBaseModel import DataBaseModel
-from models.db_schemes.project import Project
+from src.models.DataBaseModel import DataBaseModel
+from src.models.db_schemes.project import Project
 
 
 class ProjectModel(DataBaseModel):
