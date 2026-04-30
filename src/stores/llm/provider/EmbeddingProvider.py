@@ -11,15 +11,27 @@ class EmbeddingProvider(LLMInterface):
         # Store the vector size so the vector DB knows what dimension to use
         self.embedding_size = self.model.get_sentence_embedding_dimension()
 
+    #OG
     def embed(self, text: str, doc_type: str = "passage"):
         # Add prefix based on whether this is a document or a query
         # This is required by BGE models for better accuracy
-        if doc_type == "passage":
-            text = f"passage: {text}"
-        else:
-            text = f"query: {text}"
-
-        vector = self.model.encode(text)
+        doc_type = doc_type.strip().lower()
+        
+        if doc_type not in ("query", "passage"):
+            raise ValueError(f"Invalid doc_type: {doc_type}")
+            
+        if not text or not text.strip():
+            raise ValueError("Cannot embed empty text")
+        #Split words by all whitespaces and join them together separated by a space    
+        text = " ".join(text.split())    
+        
+        prefix = "query: " if doc_type == "query" else "passage: "
+        text = f"{prefix}{text}"
+        
+        vector = self.model.encode(
+            text,
+            normalize_embeddings=True
+        )
         return vector.tolist()
 
     def generate_response(self, prompt: str, chat_history: list = []):
