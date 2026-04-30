@@ -12,5 +12,6 @@ openai==1.35.15
 httpx==0.27.0
 qdrant-client==1.10.1
 sentence-transformers==2.7.0
+torch==2.2.2+cpu
 streamlit==1.35.0
 python-dotenv==1.0.1
