@@ -165,40 +165,45 @@ class NlpController(BaseController):
 
 
     
-   # option: score_threshold can be added to filter low-relevance result :)
-    def answer(self, project_id: str, query: str, top_k: int = 5):
-        # Step 1: retrieve relevant chunks
+   def answer(self, project_id: str, query: str, top_k: int = 5):
+
+        # retrieve relevant chunks
         relevant_chunks = self.search(project_id, query, top_k)
 
         if not relevant_chunks:
-            return None, None, None
+            return "I couldn't find any relevant information to answer your question.", None, None     
+ 
+        # load prompt templates
+        system_prompt = self.template_parser.get("rag", "system_prompt") #sets the behavior and role of the LLM
+        footer_prompt = self.template_parser.get("rag", "footer_prompt") #telling the model how to use the context
 
-        # Step 2: load prompt templates
-        system_prompt = self.template_parser.get("rag", "system_prompt")
-        footer_prompt = self.template_parser.get("rag", "footer_prompt")
 
-        # Step 3: build the documents section of the prompt
+        #Build numbered document section from retrieved chunks
         documents_section = ""
         for i, chunk in enumerate(relevant_chunks):
             documents_section += self.template_parser.get(
                 "rag", "document_prompt",
-                {"doc_num": i + 1, "text": chunk.text}
+                {"doc_num": i + 1, "text": chunk["doc"].text}
             )
 
-        # Step 4: combine everything into the full prompt
+
+        #combine everything into the full prompt
         full_prompt = f"{documents_section}\n\n## Question:\n{query}\n\n{footer_prompt}"
 
-        # Step 5: build chat history with system prompt
+       
+        # load chat history with system prompt
         chat_history = [
             self.generation_client.construct_prompt(
                 query=system_prompt, role="system"
             )
         ]
 
-        # Step 6: generate and return the answer
-        answer = self.generation_client.generate_response(
+       
+        # generate and return the answer
+        response  = self.generation_client.generate_response(
             prompt=full_prompt,
             chat_history=chat_history
         )
 
-        return answer, full_prompt, chat_history
+       
+        return response , full_prompt, chat_history
