@@ -1,16 +1,26 @@
 from qdrant_client import QdrantClient
 from stores.vectordb.VectorDBInterface import VectorDBInterface
-#OG
 from qdrant_client.models import VectorParams, Distance, PointStruct
 import uuid
 from types import SimpleNamespace
+from models.db_schemes import RetrievalDocument
+
 
 class QDrantDB(VectorDBInterface):
 
-    def __init__(self, url: str, api_key: str):
+    # more flexibility :)
+    distance_map = {
+        "Cosine": Distance.COSINE, # meaning dirction lw data not normalized
+        "Dot": Distance.DOT, # meaning dirction and magnitude useful lw data normalized
+        "Euclid": Distance.EUCLID, #distance
+    }
+
+    def __init__(self, url, api_key, distance_metric="Cosine"):
         self.url = url
         self.api_key = api_key
         self.client = None
+        # for flexibility :)
+        self.distance_metric = distance_metric
 
     def connect(self):
         self.client = QdrantClient(
@@ -20,7 +30,7 @@ class QDrantDB(VectorDBInterface):
 
     #OG
     def create_collection(self, collection_name: str, embedding_size: int):
-        # Member 2 will implement this
+        # 3shan mynfash n3ml same collection name twice
         if self.is_collection_exists(collection_name):
             return
         
@@ -28,8 +38,11 @@ class QDrantDB(VectorDBInterface):
             collection_name=collection_name,
             vectors_config=VectorParams(
                 size=embedding_size,
-                distance=Distance.COSINE
+                
+                # distance map lle be chosen by the user but defult value lle used in case of error 
+                distance = self.distance_map.get(self.distance_metric, Distance.COSINE)
             )
+
         )
 
     #OG
@@ -55,32 +68,6 @@ class QDrantDB(VectorDBInterface):
         )
 
     #OG
-    def search_by_vector(self, collection_name: str, query_vector: list, top_k: int = 5):
-        results = self.client.search(
-            collection_name=collection_name,
-            query_vector=query_vector,
-            limit=top_k,
-            with_payload=True,
-            with_vectors=False
-        )
-
-        # Transformation Layer: Convert ScoredPoint to an object with a .text attribute
-        formatted_results = []
-
-        for res in results:
-            payload = res.payload or {}
-
-            formatted_results.append(
-                SimpleNamespace(
-                    text=payload.get("text", ""),
-                    metadata=payload.get("metadata", {}),
-                    score=res.score
-                )
-            )
-
-        return formatted_results
-
-    #OG
     def delete_collection(self, collection_name: str):
         # Member 2 will implement this
         try:
@@ -97,3 +84,54 @@ class QDrantDB(VectorDBInterface):
             ]
         except Exception:
             return False
+        
+    ##########################search##########################
+
+    # for hyprid search might be useful in some cases
+    def search_keyword(self, query: str, results: list) -> list:
+       return [r.text for r in results if query.lower() in r.text.lower()]
+
+
+
+    # applied score threshold to filter out low-relevance results,
+    # especially important for small medical datasets to reduce hallucinations.
+    def search_by_vector(
+        self,
+        collection_name: str,
+        query_vector: list,
+        top_k: int = 5,
+        score_threshold: float = 0.2 
+    ):
+        # check collection
+        if not self.is_collection_exists(collection_name):
+            return []
+        
+        #to handle  Qdrant failures :)
+        try:
+            results = self.client.search(
+                collection_name=collection_name,
+                query_vector=query_vector,
+                limit=top_k,
+                score_threshold=score_threshold,
+                with_payload=True,
+                with_vectors=False
+            )
+
+        except Exception as e:
+            print(f"[ERROR] Qdrant search failed: {e}")
+            return []
+
+        # transform safely
+        formatted = []
+        for r in results:
+            payload = r.payload or {}
+            text = payload.get("text", "")
+
+            formatted.append(
+                RetrievalDocument(
+                    text=text,
+                    score=r.score
+                )
+            )
+
+        return formatted
