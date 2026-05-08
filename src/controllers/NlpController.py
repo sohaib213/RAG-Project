@@ -165,7 +165,7 @@ class NlpController(BaseController):
 
 
     
-   def answer(self, project_id: str, query: str, top_k: int = 5):
+    def answer(self, project_id: str, query: str, top_k: int = 5):
 
         # retrieve relevant chunks
         relevant_chunks = self.search(project_id, query, top_k)

@@ -12,6 +12,5 @@ class DataChunk(BaseModel):
 
 
 class RetrievalDocument(BaseModel):
-    # This is what we return after a vector search
     text: str
     score: float
