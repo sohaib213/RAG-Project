@@ -16,7 +16,7 @@ top_k = st.sidebar.slider("Top K Results", 1, 10, 5)
 do_reset = st.sidebar.checkbox("Reset existing data before processing", value=True)
 
 # ── Step 1: Upload ────────────────────────────────────────────────────────────
-st.header("Step 1 — Upload a Document")
+st.header("Upload a Document")
 uploaded_file = st.file_uploader("Choose a PDF or TXT file", type=["pdf", "txt"])
 
 if uploaded_file and st.button("Upload"):
@@ -32,7 +32,7 @@ if uploaded_file and st.button("Upload"):
         st.error(f"Upload failed: {response.text}")
 
 # ── Step 2: Process ───────────────────────────────────────────────────────────
-st.header("Step 2 — Process Document into Chunks")
+st.header("Process Document into Chunks")
 
 if st.button("Process Document"):
     file_name = st.session_state.get("file_name")
@@ -56,7 +56,7 @@ if st.button("Process Document"):
             st.error(f"Processing failed: {response.text}")
 
 # ── Step 3: Push to Index ─────────────────────────────────────────────────────
-st.header("Step 3 — Push to Vector Index")
+st.header("Push to Vector Index")
 
 if st.button("Push to Index"):
     with st.spinner("Embedding and indexing chunks..."):
@@ -70,7 +70,7 @@ if st.button("Push to Index"):
         st.error(f"Push failed: {response.text}")
 
 # ── Step 4: Ask a Question ────────────────────────────────────────────────────
-st.header("Step 4 — Ask a Question")
+st.header("Ask a Question")
 
 query = st.text_input("Your question", placeholder="What are the side effects of this drug?")
 
