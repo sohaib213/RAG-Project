@@ -21,6 +21,7 @@ class QDrantDB(VectorDBInterface):
         self.client = None
         # for flexibility :)
         self.distance_metric = distance_metric
+        self.connect()
 
     def connect(self):
         self.client = QdrantClient(

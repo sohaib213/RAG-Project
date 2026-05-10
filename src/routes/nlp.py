@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from models import ProjectModel, ChunkModel
 from controllers import NlpController
@@ -8,17 +8,13 @@ nlp_router = APIRouter()
 
 
 @nlp_router.post("/index/push/{project_id}")
-async def push_to_index(project_id: str, push_request: PushRequest,
-                        request=None):
+async def push_to_index(project_id: str, push_request: PushRequest, request: Request):
 
-    # Step 1: get the project from MongoDB
     project_model = ProjectModel(db_client=request.app.db_client)
     await project_model.get_project_or_create(project_id)
 
-    # Step 2: get all chunks for this project from MongoDB
     chunk_model = ChunkModel(db_client=request.app.db_client)
 
-    # Fetch chunks page by page until we have them all
     all_chunks = []
     page = 1
     while True:
@@ -37,7 +33,6 @@ async def push_to_index(project_id: str, push_request: PushRequest,
             "error": "No chunks found for this project"
         })
 
-    # Step 3: push chunks to the vector index
     nlp_controller = NlpController(
         vectordb_client=request.app.vectordb_client,
         generation_client=request.app.generation_client,
@@ -57,7 +52,7 @@ async def push_to_index(project_id: str, push_request: PushRequest,
 
 
 @nlp_router.get("/index/info/{project_id}")
-async def get_index_info(project_id: str, request=None):
+async def get_index_info(project_id: str, request: Request):
 
     nlp_controller = NlpController(
         vectordb_client=request.app.vectordb_client,
@@ -76,8 +71,7 @@ async def get_index_info(project_id: str, request=None):
 
 
 @nlp_router.post("/index/search/{project_id}")
-async def search_index(project_id: str, search_request: SearchRequest,
-                       request=None):
+async def search_index(project_id: str, search_request: SearchRequest, request: Request):
 
     nlp_controller = NlpController(
         vectordb_client=request.app.vectordb_client,
@@ -99,15 +93,17 @@ async def search_index(project_id: str, search_request: SearchRequest,
 
     return JSONResponse(status_code=200, content={
         "results": [
-            {"text": r.text, "score": r.score}
+            {
+                "text": r["doc"].text,
+                "score": r["score"]
+            }
             for r in results
         ]
     })
 
 
 @nlp_router.post("/index/answer/{project_id}")
-async def get_answer(project_id: str, search_request: SearchRequest,
-                     request=None):
+async def get_answer(project_id: str, search_request: SearchRequest, request: Request):
 
     nlp_controller = NlpController(
         vectordb_client=request.app.vectordb_client,

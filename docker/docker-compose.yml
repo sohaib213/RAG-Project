@@ -20,6 +20,22 @@ services:
   #   volumes:
   #     - ./qdrant_data:/qdrant/storage
 
+  streamlit:
+    build:
+      context: ../src
+      dockerfile: Dockerfile
+    container_name: rag_streamlit
+    restart: always
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../src/.env
+    depends_on:
+      - app
+    volumes:
+      - ../src:/app
+    command: streamlit run interface.py --server.port 8501 --server.address 0.0.0.0
+
   app:
     build:
       context: ../src

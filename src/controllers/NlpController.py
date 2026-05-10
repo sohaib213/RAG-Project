@@ -165,14 +165,14 @@ class NlpController(BaseController):
 
 
     
-   def answer(self, project_id: str, query: str, top_k: int = 5):
+    def answer(self, project_id: str, query: str, top_k: int = 5):
 
         # retrieve relevant chunks
         relevant_chunks = self.search(project_id, query, top_k)
 
         if not relevant_chunks:
             return "I couldn't find any relevant information to answer your question.", None, None     
- 
+
         # load prompt templates
         system_prompt = self.template_parser.get("rag", "system_prompt") #sets the behavior and role of the LLM
         footer_prompt = self.template_parser.get("rag", "footer_prompt") #telling the model how to use the context

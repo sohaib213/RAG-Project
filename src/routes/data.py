@@ -5,7 +5,6 @@ from helpers import get_settings, Settings
 from models import ProjectModel, ChunkModel
 from controllers import DataController, FileController, ProcessController
 from routes.schema.data import ProcessRequest
-
 data_router = APIRouter()
 
 
@@ -44,8 +43,7 @@ async def upload_file(project_id: str, file: UploadFile = File(...),
 
 
 @data_router.post("/process/{project_id}")
-async def process_file(project_id: str, process_request: ProcessRequest = None,
-                      request=None):
+async def process_file(project_id: str, process_request: ProcessRequest, request: Request):
 
     # Step 1: get the project from MongoDB
     project_model = ProjectModel(db_client=request.app.db_client)
@@ -72,6 +70,6 @@ async def process_file(project_id: str, process_request: ProcessRequest = None,
     count = await chunk_model.insert_many_chunks(chunks, project_id)
 
     return JSONResponse(status_code=200, content={
-        "message": f"File processed successfully",
+        "message": "File processed successfully",
         "chunks_created": count
     })
