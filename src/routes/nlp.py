@@ -80,10 +80,11 @@ async def search_index(project_id: str, search_request: SearchRequest, request: 
         template_parser=request.app.template_parser
     )
 
-    results = nlp_controller.search(
+    results, search_query = nlp_controller.search_with_language(
         project_id=project_id,
         query=search_request.text,
-        top_k=search_request.top_k
+        top_k=search_request.top_k,
+        language=search_request.language
     )
 
     if not results:
@@ -92,6 +93,7 @@ async def search_index(project_id: str, search_request: SearchRequest, request: 
         })
 
     return JSONResponse(status_code=200, content={
+        "search_query": search_query,
         "results": [
             {
                 "text": r["doc"].text,
@@ -115,7 +117,8 @@ async def get_answer(project_id: str, search_request: SearchRequest, request: Re
     answer, full_prompt, chat_history = nlp_controller.answer(
         project_id=project_id,
         query=search_request.text,
-        top_k=search_request.top_k
+        top_k=search_request.top_k,
+        language=search_request.language
     )
 
     if not answer:

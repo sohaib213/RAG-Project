@@ -6,13 +6,70 @@ import re
 class NlpController(BaseController):
 
     STOPWORDS = {
-    "the", "is", "a", "an", "and", "or", "in", "on", "at", "to", "for"
-      }
+        "the", "is", "a", "an", "and", "or", "in", "on", "at", "to", "for"
+    }
+
     def tokenize(self, text):
-        text = text.lower()
+        text = (text or "").lower()
         tokens = re.findall(r"[a-z0-9]+", text)
 
         return [t for t in tokens if t not in self.STOPWORDS]
+
+    def contains_arabic(self, text):
+        return bool(re.search(r"[\u0600-\u06FF]", text or ""))
+
+    def translate_query_to_english(self, query):
+        prompt = (
+            "Translate the following Arabic medical question into concise English for document search. "
+            "Return only the translated question, without explanations or quotation marks.\n\n"
+            f"Arabic question: {query}"
+        )
+        try:
+            translated_query = self.generation_client.generate_response(prompt=prompt)
+        except Exception as e:
+            print(f"[WARN] Arabic query translation failed: {e}")
+            return query
+
+        return translated_query.strip() if translated_query else query
+
+
+    def normalize_repeated_clause(self, text):
+        text = (text or "").lower()
+        text = re.sub(r"^[\s\-•\d\.\)]+", "", text)
+        text = re.sub(r"^(و|او|أو)\s+", "", text)
+        text = re.sub(r"^و(?=ال)", "", text)
+        return re.sub(r"\s+", " ", text).strip()
+
+
+    def remove_repeated_clauses(self, text):
+        cleaned_lines = []
+
+        for line in (text or "").splitlines():
+            if not line.strip():
+                cleaned_lines.append(line)
+                continue
+
+            parts = re.split(r"([،,؛;])", line)
+            seen = set()
+            rebuilt = []
+
+            for index in range(0, len(parts), 2):
+                clause = parts[index].strip()
+                delimiter = parts[index + 1] if index + 1 < len(parts) else ""
+
+                if not clause:
+                    continue
+
+                normalized_clause = self.normalize_repeated_clause(clause)
+                if len(normalized_clause) > 2 and normalized_clause in seen:
+                    continue
+
+                seen.add(normalized_clause)
+                rebuilt.append(clause + delimiter)
+
+            cleaned_lines.append(" ".join(rebuilt).strip())
+
+        return "\n".join(cleaned_lines).strip()
 
 
     def __init__(self, vectordb_client, generation_client,
@@ -88,13 +145,8 @@ class NlpController(BaseController):
     
     def search(self, project_id: str, query: str, top_k: int = 5, score_threshold: float = 0.2):
 
-        # tokenize the query for BM25 && check the query is empty after tokenization
+        # tokenize the query for BM25; semantic search still works if this is empty
         query_tokens = self.tokenize(query)
-
-
-        # if the query is empty after tokenization, return empty results
-        if not query_tokens:
-           return []
         
 
         # get the collection name for the project
@@ -118,29 +170,31 @@ class NlpController(BaseController):
       
         # search for the most similar chunks in Qdrant "CONTENT SEARCH"
         corpus = [self.tokenize(r.text) for r in vector_results] # divide each document into tokens for BM25
-        bm25 = BM25Okapi(corpus) # train BM25 on the candidate documents
-        bm25_scores = bm25.get_scores(query_tokens) 
+        use_bm25 = bool(query_tokens) and any(corpus)
+        bm25_scores = []
+        if use_bm25:
+            bm25 = BM25Okapi(corpus) # train BM25 on the candidate documents
+            bm25_scores = bm25.get_scores(query_tokens) 
 
 
        #sort each document by vector similarity and BM25 score
         vec_sorted = sorted(enumerate(vector_results), key=lambda x: x[1].score, reverse=True)
-        bm25_sorted = sorted(enumerate(bm25_scores), key=lambda x: x[1], reverse=True)
+        bm25_sorted = sorted(enumerate(bm25_scores), key=lambda x: x[1], reverse=True) if use_bm25 else []
 
 
 
        # assign ranks based on the sorted order for both vector similarity and BM25 scores
         vec_rank = {idx: rank+1 for rank, (idx, _) in enumerate(vec_sorted)}
-        bm25_rank = {idx: rank+1 for rank, (idx, _) in enumerate(bm25_sorted)}
+        bm25_rank = {idx: rank+1 for rank, (idx, _) in enumerate(bm25_sorted)} if use_bm25 else {}
 
 
        # combine the ranks using RRF formula: score =(1 / (k + vec_rank)) +(1 / (k + bm25_rank))
         k = 60
         combined = []
         for i, r in enumerate(vector_results):
-            score = (
-                (1 / (k + vec_rank[i])) +
-                (1 / (k + bm25_rank[i]))
-            )
+            score = (1 / (k + vec_rank[i]))
+            if use_bm25:
+                score += (1 / (k + bm25_rank[i]))
 
             combined.append((r, score))
 
@@ -164,18 +218,41 @@ class NlpController(BaseController):
         return final_results[:top_k]
 
 
+    def prepare_query_for_search(self, query: str, language: str = "en"):
+        language = (language or "en").lower()
+        if language == "ar" and self.contains_arabic(query):
+            return self.translate_query_to_english(query)
+
+        return query
+
+
+    def search_with_language(self, project_id: str, query: str, top_k: int = 5, language: str = "en"):
+        search_query = self.prepare_query_for_search(query=query, language=language)
+        return self.search(project_id=project_id, query=search_query, top_k=top_k), search_query
+
+
     
-    def answer(self, project_id: str, query: str, top_k: int = 5):
+    def answer(self, project_id: str, query: str, top_k: int = 5, language: str = "en"):
 
         # retrieve relevant chunks
-        relevant_chunks = self.search(project_id, query, top_k)
+        relevant_chunks, search_query = self.search_with_language(
+            project_id=project_id,
+            query=query,
+            top_k=top_k,
+            language=language
+        )
 
         if not relevant_chunks:
+            if language == "ar":
+                return "لم أجد معلومات ذات صلة في الوثائق للإجابة على سؤالك.", None, None
+
             return "I couldn't find any relevant information to answer your question.", None, None     
 
+        # switch language for prompts
+        self.template_parser.set_language(language)
         # load prompt templates
-        system_prompt = self.template_parser.get("rag", "system_prompt") #sets the behavior and role of the LLM
-        footer_prompt = self.template_parser.get("rag", "footer_prompt") #telling the model how to use the context
+        system_prompt = self.template_parser.get("rag", "system_prompt")
+        footer_prompt = self.template_parser.get("rag", "footer_prompt")
 
 
         #Build numbered document section from retrieved chunks
@@ -188,9 +265,12 @@ class NlpController(BaseController):
 
 
         #combine everything into the full prompt
-        full_prompt = f"{documents_section}\n\n## Question:\n{query}\n\n{footer_prompt}"
+        search_note = ""
+        if search_query != query:
+            search_note = f"\n## English search query:\n{search_query}\n"
 
-       
+        full_prompt = f"{documents_section}{search_note}\n\n## Question:\n{query}\n\n{footer_prompt}"
+
         # load chat history with system prompt
         chat_history = [
             self.generation_client.construct_prompt(
@@ -198,12 +278,11 @@ class NlpController(BaseController):
             )
         ]
 
-       
         # generate and return the answer
         response  = self.generation_client.generate_response(
             prompt=full_prompt,
             chat_history=chat_history
         )
+        response = self.remove_repeated_clauses(response)
 
-       
         return response , full_prompt, chat_history

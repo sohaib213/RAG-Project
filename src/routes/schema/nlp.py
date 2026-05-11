@@ -8,3 +8,4 @@ class PushRequest(BaseModel):
 class SearchRequest(BaseModel):
     text: str
     top_k: int = 5
+    language: str = "en"

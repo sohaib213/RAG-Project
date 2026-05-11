@@ -10,6 +10,7 @@ st.markdown("Upload a drug leaflet PDF and ask questions about it.")
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.header("Project Settings")
 project_id = st.sidebar.text_input("Project ID", value="medproject")
+language = st.sidebar.selectbox("Language / اللغة", ["en", "ar"])
 chunk_size = st.sidebar.slider("Chunk Size", 100, 1000, 300)
 overlap = st.sidebar.slider("Overlap", 0, 200, 50)
 top_k = st.sidebar.slider("Top K Results", 1, 10, 5)
@@ -84,11 +85,15 @@ with col1:
             with st.spinner("Searching..."):
                 response = requests.post(
                     f"{API_URL}/api/nlp/index/search/{project_id}",
-                    json={"text": query, "top_k": top_k}
+                    json={"text": query, "top_k": top_k, "language": language}
                 )
             if response.status_code == 200:
-                results = response.json()["results"]
+                data = response.json()
+                results = data["results"]
                 st.subheader("Retrieved Chunks")
+                search_query = data.get("search_query")
+                if search_query and search_query != query:
+                    st.caption(f"Search query: {search_query}")
                 for i, r in enumerate(results):
                     with st.expander(f"Chunk {i+1} — Score: {r['score']:.4f}"):
                         st.write(r["text"])
@@ -103,7 +108,7 @@ with col2:
             with st.spinner("Generating answer..."):
                 response = requests.post(
                     f"{API_URL}/api/nlp/index/answer/{project_id}",
-                    json={"text": query, "top_k": top_k}
+                    json={"text": query, "top_k": top_k, "language": language}
                 )
             if response.status_code == 200:
                 data = response.json()
