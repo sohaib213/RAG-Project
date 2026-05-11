@@ -6,7 +6,6 @@ class ChunkModel(DataBaseModel):
 
     def __init__(self, db_client):
         super().__init__(db_client)
-        # This is the MongoDB collection we will store chunks in
         self.collection = self.db_client["chunks"]
 
     async def insert_many_chunks(self, chunks: list, project_id: str):
@@ -21,7 +20,7 @@ class ChunkModel(DataBaseModel):
             for i, chunk in enumerate(chunks)
         ]
 
-        # Insert all chunks at once instead of one by one
+        # Insert all chunks at once
         result = await self.collection.insert_many(chunk_documents)
         return len(result.inserted_ids)
 

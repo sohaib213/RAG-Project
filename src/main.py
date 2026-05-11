@@ -10,7 +10,6 @@ from stores.llm.tempelate.template_parser import TemplateParser
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This runs once when the app starts
     settings = get_settings()
 
     # Connect to MongoDB
@@ -31,7 +30,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # This runs when the app shuts down
+    # when app shutdown
     app.db_motor_client.close()
 
 
@@ -44,7 +43,6 @@ def create_app():
         lifespan=lifespan
     )
 
-    # Register all routers with their URL prefixes
     app.include_router(base_router, prefix="/api")
     app.include_router(data_router, prefix="/api/data")
     app.include_router(nlp_router, prefix="/api/nlp")

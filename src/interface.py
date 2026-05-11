@@ -7,7 +7,7 @@ st.set_page_config(page_title="Medical RAG Assistant", layout="wide")
 st.title("Medical Drug Information Assistant")
 st.markdown("Upload a drug leaflet PDF and ask questions about it.")
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+# Sidebar
 st.sidebar.header("Project Settings")
 project_id = st.sidebar.text_input("Project ID", value="medproject")
 language = st.sidebar.selectbox("Language / اللغة", ["en", "ar"])
@@ -16,7 +16,7 @@ overlap = st.sidebar.slider("Overlap", 0, 200, 50)
 top_k = st.sidebar.slider("Top K Results", 1, 10, 5)
 do_reset = st.sidebar.checkbox("Reset existing data before processing", value=True)
 
-# ── Step 1: Upload ────────────────────────────────────────────────────────────
+# Upload
 st.header("Upload a Document")
 uploaded_file = st.file_uploader("Choose a PDF or TXT file", type=["pdf", "txt"])
 
@@ -32,7 +32,7 @@ if uploaded_file and st.button("Upload"):
     else:
         st.error(f"Upload failed: {response.text}")
 
-# ── Step 2: Process ───────────────────────────────────────────────────────────
+# Process
 st.header("Process Document into Chunks")
 
 if st.button("Process Document"):
@@ -56,7 +56,7 @@ if st.button("Process Document"):
         else:
             st.error(f"Processing failed: {response.text}")
 
-# ── Step 3: Push to Index ─────────────────────────────────────────────────────
+# Push to Index
 st.header("Push to Vector Index")
 
 if st.button("Push to Index"):
@@ -70,7 +70,7 @@ if st.button("Push to Index"):
     else:
         st.error(f"Push failed: {response.text}")
 
-# ── Step 4: Ask a Question ────────────────────────────────────────────────────
+# Ask a Question
 st.header("Ask a Question")
 
 query = st.text_input("Your question", placeholder="What are the side effects of this drug?")

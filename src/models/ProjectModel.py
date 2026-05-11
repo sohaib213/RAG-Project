@@ -6,7 +6,6 @@ class ProjectModel(DataBaseModel):
 
     def __init__(self, db_client):
         super().__init__(db_client)
-        # This is the MongoDB collection we will store projects in
         self.collection = self.db_client["projects"]
 
     async def create_project(self, project: Project):

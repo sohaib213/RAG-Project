@@ -76,7 +76,6 @@ class NlpController(BaseController):
                  embedding_client, template_parser: TemplateParser):
         
         super().__init__()
-        # All three clients are injected from main.py
         self.vectordb_client = vectordb_client
         self.generation_client = generation_client
         self.embedding_client = embedding_client
@@ -84,15 +83,12 @@ class NlpController(BaseController):
 
 
     def get_collection_name(self, project_id: str):
-        # Each project gets its own isolated collection in Qdrant
         return f"collection_{project_id}"
 
 
-    #OG
     def push_to_index(self, project_id: str, chunks: list, do_reset: int = 0):
         collection_name = self.get_collection_name(project_id)
 
-        # Delete the old collection if reset is requested
         if do_reset == 1:
             try:
                 self.vectordb_client.delete_collection(collection_name)
@@ -138,26 +134,15 @@ class NlpController(BaseController):
         )        
         return len(texts)
     
-
-    
-    # updated to prevent halthenation
-    # we dont want just close meaning for spacefic anticpations
     
     def search(self, project_id: str, query: str, top_k: int = 5, score_threshold: float = 0.2):
 
-        # tokenize the query for BM25; semantic search still works if this is empty
         query_tokens = self.tokenize(query)
         
-
-        # get the collection name for the project
         collection_name = self.get_collection_name(project_id)
         
-
-        # Embed the query BY doc_type="query" not doc_type="passage"
         query_vector = self.embedding_client.embed(query, doc_type="query")
 
-
-        # search for the most similar chunks in Qdrant using the query vector "SYMANTIC SEARCH"
         vector_results  = self.vectordb_client.search_by_vector(
             collection_name=collection_name,
             query_vector=query_vector,
@@ -167,28 +152,28 @@ class NlpController(BaseController):
         if not vector_results:
             return []
         
-      
+
         # search for the most similar chunks in Qdrant "CONTENT SEARCH"
         corpus = [self.tokenize(r.text) for r in vector_results] # divide each document into tokens for BM25
         use_bm25 = bool(query_tokens) and any(corpus)
         bm25_scores = []
         if use_bm25:
-            bm25 = BM25Okapi(corpus) # train BM25 on the candidate documents
+            bm25 = BM25Okapi(corpus)
             bm25_scores = bm25.get_scores(query_tokens) 
 
 
-       #sort each document by vector similarity and BM25 score
+        #sort each document by vector similarity and BM25 score
         vec_sorted = sorted(enumerate(vector_results), key=lambda x: x[1].score, reverse=True)
         bm25_sorted = sorted(enumerate(bm25_scores), key=lambda x: x[1], reverse=True) if use_bm25 else []
 
 
 
-       # assign ranks based on the sorted order for both vector similarity and BM25 scores
+        # assign ranks based on the sorted order for both vector similarity and BM25 scores
         vec_rank = {idx: rank+1 for rank, (idx, _) in enumerate(vec_sorted)}
         bm25_rank = {idx: rank+1 for rank, (idx, _) in enumerate(bm25_sorted)} if use_bm25 else {}
 
 
-       # combine the ranks using RRF formula: score =(1 / (k + vec_rank)) +(1 / (k + bm25_rank))
+        # combine the ranks using RRF formula: score =(1 / (k + vec_rank)) +(1 / (k + bm25_rank))
         k = 60
         combined = []
         for i, r in enumerate(vector_results):

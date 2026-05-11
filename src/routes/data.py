@@ -13,18 +13,18 @@ async def upload_file(project_id: str, file: UploadFile = File(...),
                       settings: Settings = Depends(get_settings),
                       request: Request = None):
 
-    # Step 1: validate the file type and size
+    # validate the file type and size
     data_controller = DataController()
     is_valid, message = data_controller.validate_file(file)
 
     if not is_valid:
         return JSONResponse(status_code=400, content={"error": message})
 
-    # Step 2: make sure the project exists in MongoDB
+    # make sure the project exists in MongoDB
     project_model = ProjectModel(db_client=request.app.db_client)
     project = await project_model.get_project_or_create(project_id)
 
-    # Step 3: save the file to disk
+    # save the file to disk
     file_controller = FileController()
     file_path = file_controller.get_file_path(project_id, file.filename)
 
@@ -45,17 +45,17 @@ async def upload_file(project_id: str, file: UploadFile = File(...),
 @data_router.post("/process/{project_id}")
 async def process_file(project_id: str, process_request: ProcessRequest, request: Request):
 
-    # Step 1: get the project from MongoDB
+    # get the project from MongoDB
     project_model = ProjectModel(db_client=request.app.db_client)
     project = await project_model.get_project_or_create(project_id)
 
-    # Step 2: delete old chunks if do_reset is set
+    # delete old chunks if do_reset is set
     chunk_model = ChunkModel(db_client=request.app.db_client)
 
     if process_request.do_reset == 1:
         await chunk_model.delete_chunks_by_project(project_id)
 
-    # Step 3: load and split the file into chunks
+    # load and split the file into chunks
     process_controller = ProcessController(project_id=project_id)
     chunks = process_controller.process_file(
         file_name=process_request.file_name,
@@ -66,7 +66,7 @@ async def process_file(project_id: str, process_request: ProcessRequest, request
     if chunks is None:
         return JSONResponse(status_code=400, content={"error": "Could not process file"})
 
-    # Step 4: save the chunks to MongoDB
+    # save the chunks to MongoDB
     count = await chunk_model.insert_many_chunks(chunks, project_id)
 
     return JSONResponse(status_code=200, content={
