@@ -58,7 +58,7 @@ class ProcessController(BaseController):
         
         return cleaned_documents
 
-    def process_file(self, file_name: str, chunk_size: int = 800, overlap: int = 100):
+    def process_file(self, file_name: str, chunk_size: int = 300, overlap: int = 50):
         content = self.get_file_content(file_name)
 
         if content is None:
