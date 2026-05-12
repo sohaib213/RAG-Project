@@ -135,7 +135,7 @@ class NlpController(BaseController):
         return len(texts)
     
     
-    def search(self, project_id: str, query: str, top_k: int = 5, score_threshold: float = 0.2):
+    def search(self, project_id: str, query: str, top_k: int = 5, score_threshold: float = 0.5):
 
         query_tokens = self.tokenize(query)
         
